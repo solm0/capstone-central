@@ -7,7 +7,7 @@ from packs import PACKS
 from db import get_db
 from models import UserLemma
 
-router = APIRouter(prefix="/api/internal")
+router = APIRouter(prefix="/api")
 
 
 # -----------------------------

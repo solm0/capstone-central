@@ -1,56 +1,48 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from db import get_db
 from models import UserLemma, User
-from .auth_router import get_current_user, get_current_user_optional
+from .auth_router import get_current_user
 from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy.dialects.sqlite import insert
 
 router = APIRouter(prefix="/api")
 
-def to_local_key(lemma: str, pos: str) -> str:
-    return f"{lemma}_{pos}"
 
-def to_global_key(lemma: str, pos: str, lang: str) -> str:
-    return f"{lemma}/{pos}/{lang}"
-
-def parse_global_key(key: str):
-    lemma, pos, lang = key.split("/")
-    return lemma, pos, lang
-
-class FavoriteToggleRequest(BaseModel):
+class FavoriteRequest(BaseModel):
     key: str
 
-class LookupRequest(BaseModel):
-    lemma: str
-    pos: str
-    language: str
 
-class BatchRequest(BaseModel):
-    items: list[dict]
-    language: str
+class FavoriteBatchRequest(BaseModel):
+    keys: list[str]
 
-@router.post("/lemma/favorite/toggle")
-def toggle_favorite(req: FavoriteToggleRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    from sqlalchemy.dialects.sqlite import insert
 
-    try:
-        lemma, pos, lang = parse_global_key(req.key)
-    except:
-        raise ValueError("invalid key format")
-
+@router.post("/lemma/favorite")
+def add_favorite(
+    req: FavoriteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     stmt = insert(UserLemma).values(
         user_id=current_user.id,
         lemma_key=req.key
     ).on_conflict_do_nothing()
 
-    result = db.execute(stmt)
+    db.execute(stmt)
     db.commit()
 
-    if result.rowcount > 0:
-        return {"key": req.key, "is_favorite": True}
+    return {
+        "key": req.key,
+        "is_favorite": True
+    }
 
-    # 이미 존재 → 삭제
+
+@router.delete("/lemma/favorite")
+def remove_favorite(
+    req: FavoriteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     row = db.query(UserLemma).filter_by(
         user_id=current_user.id,
         lemma_key=req.key
@@ -60,8 +52,28 @@ def toggle_favorite(req: FavoriteToggleRequest, db: Session = Depends(get_db), c
         db.delete(row)
         db.commit()
 
-    return {"key": req.key, "is_favorite": False}
+    return {
+        "key": req.key,
+        "is_favorite": False
+    }
 
+
+@router.post("/lemma/favorite/check")
+def check_favorites(
+    req: FavoriteBatchRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    rows = db.query(UserLemma.lemma_key).filter(
+        UserLemma.user_id == current_user.id,
+        UserLemma.lemma_key.in_(req.keys)
+    ).all()
+
+    favorites = {r[0] for r in rows}
+
+    return {
+        "favorites": list(favorites)
+    }
 
 @router.get("/lemma/favorites")
 def get_favorites(

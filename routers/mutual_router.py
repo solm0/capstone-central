@@ -73,22 +73,29 @@ def get_requests(
         Mutual.requester_id != current_user.id
     ).all()
 
-    ids = [r.user1_id for r in rows]
-    users = db.query(User).filter(User.id.in_(ids)).all()
+    other_ids = [
+        r.user2_id if r.user1_id == current_user.id else r.user1_id
+        for r in rows
+    ]
 
+    users = db.query(User).filter(User.id.in_(other_ids)).all()
     user_map = {u.id: u for u in users}
 
     return [
         {
             "id": r.id,
             "user": {
-                "id": r.user1_id,
-                "name": user_map[r.user1_id].name,
-                "email": user_map[r.user1_id].email
-            }
+                "id": other_id,
+                "name": user_map[other_id].name,
+                "email": user_map[other_id].email
+            },
         }
         for r in rows
+        for other_id in [
+            r.user2_id if r.user1_id == current_user.id else r.user1_id
+        ]
     ]
+
 
 # ===== pending 보낸 요청 =====
 @router.get("/sent")
@@ -101,17 +108,25 @@ def get_sent_requests(
         Mutual.requester_id == current_user.id
     ).all()
 
-    ids = [r.user2_id for r in rows]
-    users = db.query(User).filter(User.id.in_(ids)).all()
+    other_ids = [
+        r.user2_id if r.user1_id == current_user.id else r.user1_id
+        for r in rows
+    ]
+
+    users = db.query(User).filter(User.id.in_(other_ids)).all()
+    user_map = {u.id: u for u in users}
 
     return {
         "items": [
             {
-                "id": u.id,
-                "name": u.name,
-                "email": u.email
+                "id": other_id,
+                "name": user_map[other_id].name,
+                "email": user_map[other_id].email
             }
-            for u in users
+            for r in rows
+            for other_id in [
+                r.user2_id if r.user1_id == current_user.id else r.user1_id
+            ]
         ]
     }
 
