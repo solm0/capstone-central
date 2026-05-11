@@ -7,7 +7,8 @@ PACKS = [
         "corpus": [
             {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
             {"Corpora used": "rus_wikipedia_2021_300K, rus-ru_web-public_2019_1M"}
-        ]
+        ],
+        "ocr_supported": True
     },
     {
         "lang": "de",
@@ -17,7 +18,8 @@ PACKS = [
         "corpus": [
             {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
             {"Corpora used": "deu_wikipedia_2021_300K, deu-de_web_2021_1M"}
-        ]
+        ],
+        "ocr_supported": True
     },
     {
         "lang": "en",
@@ -27,17 +29,8 @@ PACKS = [
         "corpus": [
             {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
             {"Corpora used": "eng-simple_wikipedia_2021_300K, eng-uk_web-public_2018_1M"}
-        ]
-    },
-    {
-        "lang": "ko",
-        "version": "1.0.0",
-        "filename": "ko-v1.0.0.zip",
-        "tag": "v1.0.0",
-        "corpus": [
-            {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
-            {"Corpora used": "kor_wikipedia_2021_300K, kor-kr_web_2020_1M"}
-        ]
+        ],
+        "ocr_supported": True
     },
     {
         "lang": "sr",
@@ -46,7 +39,19 @@ PACKS = [
         "tag": "v1.0.0",
         "corpus": [
             {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
-            {"Corpora used": " srp_wikipedia_2021_300K, srp-rs_web_2016_1M"}
-        ]
+            {"Corpora used": "srp_wikipedia_2021_300K, srp-rs_web_2016_1M"}
+        ],
+        "ocr_supported": False
+    },
+    {
+        "lang": "mk",
+        "version": "1.0.0",
+        "filename": "mk-v1.0.0.zip",
+        "tag": "v1.0.0",
+        "corpus": [
+            {"Data source": "Leipzig Corpora Collection, University of Leipzig"},
+            {"Corpora used": "mkd_wikipedia_2021_300K, mkd-mk_web_2015_1M"}
+        ],
+        "ocr_supported": False
     },
 ]
