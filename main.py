@@ -18,7 +18,6 @@ from routers.mutual_router import router as mutual_router
 from routers.comment_router import router as comment_router
 from routers.internal_router import router as internal_router
 from routers.mobile_router import router as mobile_router
-from routers.spotify_router import router as spotify_router
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models"
@@ -94,6 +93,5 @@ app.include_router(mutual_router)
 app.include_router(comment_router)
 app.include_router(internal_router)
 app.include_router(mobile_router)
-app.include_router(spotify_router)
 
 Base.metadata.create_all(bind=engine)

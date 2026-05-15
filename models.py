@@ -111,17 +111,3 @@ class Notification(Base):
     is_read = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
-
-
-class SpotifyConnection(Base):
-    __tablename__ = "spotify_connections"
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
-    provider_user_id = Column(String, nullable=False, index=True)
-    access_token = Column(Text, nullable=False)
-    refresh_token = Column(Text, nullable=True)
-    expires_at = Column(DateTime, nullable=False)
-    scope = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
