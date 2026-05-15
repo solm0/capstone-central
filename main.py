@@ -1,5 +1,10 @@
 import os
+
+import stanza
+import classla
+
 from db import engine, Base
+from packs import PACKS
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +18,47 @@ from routers.comment_router import router as comment_router
 from routers.internal_router import router as internal_router
 from routers.mobile_router import router as mobile_router
 
+MODEL_DIR = "./models"
+CLASSLA_LANGS = {"sr", "mk"}
+
 app = FastAPI()
+
+# stanza 모델 설치
+def ensure_language_models():
+    os.makedirs(MODEL_DIR, exist_ok=True)
+
+    downloaded = set()
+
+    for pack in PACKS:
+        lang = pack["lang"]
+
+        if lang in downloaded:
+            continue
+
+        downloaded.add(lang)
+
+        try:
+            if lang in CLASSLA_LANGS:
+                print(f"[classla] ensuring model: {lang}")
+
+                classla.download(
+                    lang,
+                    dir=MODEL_DIR,
+                )
+
+            else:
+                print(f"[stanza] ensuring model: {lang}")
+
+                stanza.download(
+                    lang,
+                    model_dir=MODEL_DIR,
+                )
+
+        except Exception as e:
+            print(f"Failed downloading {lang}: {e}")
+
+
+ensure_language_models()
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +83,3 @@ app.include_router(internal_router)
 app.include_router(mobile_router)
 
 Base.metadata.create_all(bind=engine)
-
-if os.path.exists("dist"):
-    app.mount("/", StaticFiles(directory="dist", html=True), name="static")
