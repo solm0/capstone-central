@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.solmi.nautilus.mobile",
+      "sha256_cert_fingerprints": [
+        "5D:B8:C2:0D:AF:A1:55:6D:F2:B4:F3:89:13:E2:06:C1:7D:76:57:E6:07:EB:B2:1C:43:85:67:1F:EF:8F:90:F7"
+      ]
+    }
+  }
+]

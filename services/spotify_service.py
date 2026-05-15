@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import re
+import logging
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -18,6 +19,7 @@ SPOTIFY_API_BASE = "https://api.spotify.com/v1"
 LRCLIB_API_BASE = os.getenv("LRCLIB_API_BASE", "https://lrclib.net/api").rstrip("/")
 SPOTIFY_TIMEOUT_SECONDS = float(os.getenv("SPOTIFY_TIMEOUT_SECONDS", "10"))
 
+logger = logging.getLogger(__name__)
 
 def utcnow() -> datetime:
     return datetime.utcnow()
@@ -85,6 +87,7 @@ def exchange_code_for_token(*, client_id: str, client_secret: str, code: str, re
     )
 
     if status >= 400 or not isinstance(payload, dict):
+        logger.error("spotify token exchange failed: status=%s payload=%s", status, payload)
         raise HTTPException(status_code=502, detail="spotify token exchange failed")
 
     return payload
@@ -132,6 +135,7 @@ def get_spotify_profile(access_token: str) -> dict[str, Any]:
     )
 
     if status >= 400 or not isinstance(payload, dict):
+        logger.error("spotify profile fetch failed: status=%s payload=%s", status, payload)
         raise HTTPException(status_code=502, detail="spotify profile fetch failed")
 
     return payload

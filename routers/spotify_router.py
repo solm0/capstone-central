@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+import logging
+logger = logging.getLogger(__name__)
 
 from db import get_db
 from models import SpotifyConnection, User
@@ -98,45 +100,49 @@ def spotify_callback(
     error: str | None = None,
     db: Session = Depends(get_db),
 ):
-    require_spotify_config()
+    try:
+        require_spotify_config()
 
-    if error:
-        return RedirectResponse(with_query_params(SPOTIFY_ERROR_REDIRECT, error=error))
+        if error:
+            return RedirectResponse(with_query_params(SPOTIFY_ERROR_REDIRECT, error=error))
 
-    if not code or not state:
-        raise HTTPException(status_code=400, detail="missing spotify callback parameters")
+        if not code or not state:
+            raise HTTPException(status_code=400, detail="missing spotify callback parameters")
 
-    state_payload = decode_state_token(state)
-    user = db.query(User).filter(User.id == state_payload["user_id"]).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="user not found")
+        state_payload = decode_state_token(state)
+        user = db.query(User).filter(User.id == state_payload["user_id"]).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
 
-    token_payload = exchange_code_for_token(
-        client_id=SPOTIFY_CLIENT_ID,
-        client_secret=SPOTIFY_CLIENT_SECRET,
-        code=code,
-        redirect_uri=SPOTIFY_REDIRECT_URI,
-    )
-    profile = get_spotify_profile(token_payload["access_token"])
+        token_payload = exchange_code_for_token(
+            client_id=SPOTIFY_CLIENT_ID,
+            client_secret=SPOTIFY_CLIENT_SECRET,
+            code=code,
+            redirect_uri=SPOTIFY_REDIRECT_URI,
+        )
+        profile = get_spotify_profile(token_payload["access_token"])
 
-    connection = db.query(SpotifyConnection).filter(SpotifyConnection.user_id == user.id).first()
-    if not connection:
-        connection = SpotifyConnection(user_id=user.id)
+        connection = db.query(SpotifyConnection).filter(SpotifyConnection.user_id == user.id).first()
+        if not connection:
+            connection = SpotifyConnection(user_id=user.id)
 
-    connection.provider_user_id = profile.get("id")
-    connection.access_token = token_payload["access_token"]
-    connection.refresh_token = token_payload.get("refresh_token") or connection.refresh_token
-    connection.expires_at = utcnow() + timedelta(seconds=int(token_payload.get("expires_in", 3600)))
-    connection.scope = token_payload.get("scope") or SPOTIFY_SCOPES
-    connection.updated_at = utcnow()
-    if not connection.created_at:
-        connection.created_at = utcnow()
+        connection.provider_user_id = profile.get("id")
+        connection.access_token = token_payload["access_token"]
+        connection.refresh_token = token_payload.get("refresh_token") or connection.refresh_token
+        connection.expires_at = utcnow() + timedelta(seconds=int(token_payload.get("expires_in", 3600)))
+        connection.scope = token_payload.get("scope") or SPOTIFY_SCOPES
+        connection.updated_at = utcnow()
+        if not connection.created_at:
+            connection.created_at = utcnow()
 
-    db.add(connection)
-    db.commit()
+        db.add(connection)
+        db.commit()
 
-    redirect_to = state_payload.get("redirect_to") or SPOTIFY_SUCCESS_REDIRECT
-    return RedirectResponse(with_query_params(redirect_to, spotify="connected"))
+        redirect_to = state_payload.get("redirect_to") or SPOTIFY_SUCCESS_REDIRECT
+        return RedirectResponse(with_query_params(redirect_to, spotify="connected"))
+    except Exception:
+        logger.exception("spotify callback failed")
+        raise
 
 
 @router.get("/status")

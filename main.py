@@ -45,9 +45,9 @@ def ensure_language_models():
 
         checked.add(lang)
 
-        # if model_exists(lang):
-        #     print(f"[skip] model exists: {lang}")
-        #     continue
+        if model_exists(lang):
+            print(f"[skip] model exists: {lang}")
+            continue
 
         try:
             if lang in CLASSLA_LANGS:
