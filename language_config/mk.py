@@ -18,6 +18,8 @@ def tokenize(text: str):
 
 
 _nlp = None
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
 
 
 def get_ocr():
@@ -34,6 +36,8 @@ def get_nlp():
             lang="mk",
             processors="tokenize,pos,lemma",
             use_gpu=False,
+            dir=str(MODEL_DIR),
+            download_method=None,
         )
 
     return _nlp

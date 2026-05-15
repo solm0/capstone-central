@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import stanza
 import classla
@@ -18,40 +19,51 @@ from routers.comment_router import router as comment_router
 from routers.internal_router import router as internal_router
 from routers.mobile_router import router as mobile_router
 
-MODEL_DIR = "./models"
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
+
 CLASSLA_LANGS = {"sr", "mk"}
 
 app = FastAPI()
 
-# stanza 모델 설치
-def ensure_language_models():
-    os.makedirs(MODEL_DIR, exist_ok=True)
 
-    downloaded = set()
+def model_exists(lang: str) -> bool:
+    return (MODEL_DIR / lang).exists()
+
+
+def ensure_language_models():
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+    checked = set()
 
     for pack in PACKS:
         lang = pack["lang"]
 
-        if lang in downloaded:
+        if lang in checked:
             continue
 
-        downloaded.add(lang)
+        checked.add(lang)
+
+        # if model_exists(lang):
+        #     print(f"[skip] model exists: {lang}")
+        #     continue
 
         try:
             if lang in CLASSLA_LANGS:
-                print(f"[classla] ensuring model: {lang}")
+                print(f"[classla] downloading: {lang}")
 
                 classla.download(
                     lang,
-                    dir=MODEL_DIR,
+                    package="standard",
+                    dir=str(MODEL_DIR),
                 )
 
             else:
-                print(f"[stanza] ensuring model: {lang}")
+                print(f"[stanza] downloading: {lang}")
 
                 stanza.download(
                     lang,
-                    model_dir=MODEL_DIR,
+                    model_dir=str(MODEL_DIR),
                 )
 
         except Exception as e:
