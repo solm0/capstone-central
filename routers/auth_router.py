@@ -24,6 +24,8 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = "HS256"
 DATABASE_URL = os.getenv('DATABASE_URL')
+PUBLIC_API_BASE_URL = os.getenv("PUBLIC_API_BASE_URL", "http://localhost:8000/api")
+WEB_APP_URL = os.getenv("WEB_APP_URL", "http://localhost:5173")
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
@@ -119,7 +121,7 @@ async def signup(data: SignupRequest, db: Session = Depends(get_db)):
   db.add(user)
   db.commit()
 
-  link = f"http://localhost:8000/api/verify-email?token={token}"
+  link = f"{PUBLIC_API_BASE_URL}/verify-email?token={token}"
 
   await send_email(data.email, link)
 
@@ -142,7 +144,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 
   db.commit()
 
-  return RedirectResponse("http://localhost:5173/login")
+  return RedirectResponse(f"{WEB_APP_URL}/login")
 
 # -----------------------------
 # login
@@ -187,7 +189,7 @@ async def request_reset(data: ResetRequest, db: Session = Depends(get_db)):
 
   db.commit()
 
-  link = f"http://localhost:5173/reset-password?token={token}"
+  link = f"{WEB_APP_URL}/reset-password?token={token}"
 
   await send_email(user.email, link)
 
