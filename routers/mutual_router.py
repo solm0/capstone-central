@@ -260,7 +260,8 @@ def get_timeline(
             "comment_count": count or 0,
             "user": {
                 "id": user.id,
-                "name": user.name
+                "name": user.name,
+                "email": user.email,
             },
             "page_id": page.id,
             "page_name": page.name,

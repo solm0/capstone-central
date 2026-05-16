@@ -459,7 +459,8 @@ def get_annotations_all(
             "comment_count": count or 0,
             "user": {
                 "id": current_user.id,
-                "name": current_user.name
+                "name": current_user.name,
+                "email": current_user.email,
             }
         })
 
@@ -525,5 +526,6 @@ def get_annotation(
         "user": {
             "id": u.id,
             "name": u.name,
+            "email": u.email,
         },
     }
