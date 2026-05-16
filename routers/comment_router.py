@@ -116,6 +116,7 @@ def get_comments(
             "user": {
                 "id": u.id,
                 "name": u.name,
+                "email": u.email,
             }
         })
 
