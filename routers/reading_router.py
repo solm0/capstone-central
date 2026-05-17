@@ -32,6 +32,8 @@ class ReadingPreferencePayload(BaseModel):
 class ReadingRecommendationRequest(BaseModel):
     available_languages: list[str] = Field(default_factory=list)
     refresh: bool = False
+    preferred_languages: list[str] = Field(default_factory=list)
+    preferred_categories: list[str] = Field(default_factory=list)
 
 
 def serialize_preference(preference: ReadingPreference | None):
@@ -87,6 +89,8 @@ def build_or_update_recommendation(
     user: User,
     available_languages: list[str],
     refresh: bool,
+    preferred_languages_override: list[str] | None = None,
+    preferred_categories_override: list[str] | None = None,
 ) -> DailyReadingRecommendation:
     preference = (
         db.query(ReadingPreference)
@@ -94,12 +98,20 @@ def build_or_update_recommendation(
         .first()
     )
 
-    if not preference or not preference.enabled:
-        raise HTTPException(status_code=404, detail="reading preferences not configured")
-
-    preferred_languages = normalize_preference_languages(loads_json_list(preference.languages_json))
-    selected_categories = normalize_preference_categories(loads_json_list(preference.categories_json))
+    preferred_languages = normalize_preference_languages(
+        preferred_languages_override
+        if preferred_languages_override
+        else loads_json_list(preference.languages_json) if preference else []
+    )
+    selected_categories = normalize_preference_categories(
+        preferred_categories_override
+        if preferred_categories_override
+        else loads_json_list(preference.categories_json) if preference else []
+    )
     normalized_available = normalize_preference_languages(available_languages)
+
+    if preference and not preference.enabled and not preferred_languages_override and not preferred_categories_override:
+        raise HTTPException(status_code=404, detail="reading preferences not configured")
 
     if not preferred_languages:
         raise HTTPException(status_code=400, detail="reading preference languages are empty")
@@ -242,5 +254,7 @@ def get_daily_recommendation(
         user=current_user,
         available_languages=payload.available_languages,
         refresh=payload.refresh,
+        preferred_languages_override=payload.preferred_languages,
+        preferred_categories_override=payload.preferred_categories,
     )
     return serialize_recommendation(recommendation)
