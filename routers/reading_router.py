@@ -166,6 +166,11 @@ def build_or_update_recommendation(
         raise HTTPException(status_code=400, detail=str(error)) from error
     except RuntimeError as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=504,
+            detail="Recommendation lookup timed out. Please try again.",
+        ) from error
 
     if not recommendation:
         recommendation = DailyReadingRecommendation(

@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import random
 import re
+import socket
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -332,8 +333,11 @@ def fetch_gutendex_json(url: str) -> dict[str, Any]:
         },
     )
 
-    with urlopen(request, timeout=20) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urlopen(request, timeout=12) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, socket.timeout, json.JSONDecodeError) as error:
+        raise RuntimeError("Could not fetch Gutenberg catalog data right now.") from error
 
 
 def fetch_remote_text(url: str) -> str | None:
@@ -346,10 +350,10 @@ def fetch_remote_text(url: str) -> str | None:
     )
 
     try:
-        with urlopen(request, timeout=20) as response:
+        with urlopen(request, timeout=12) as response:
             charset = response.headers.get_content_charset() or "utf-8"
             return response.read().decode(charset, errors="ignore")
-    except (HTTPError, URLError, TimeoutError, UnicodeDecodeError):
+    except (HTTPError, URLError, TimeoutError, socket.timeout, UnicodeDecodeError):
         return None
 
 
