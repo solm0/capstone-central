@@ -8,7 +8,7 @@ import datetime
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
 from dotenv import load_dotenv
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import date
 from db import get_db
@@ -25,7 +25,6 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = "HS256"
 DATABASE_URL = os.getenv('DATABASE_URL')
 PUBLIC_API_BASE_URL = os.getenv("PUBLIC_API_BASE_URL", "http://localhost:8000/api")
-WEB_APP_URL = os.getenv("WEB_APP_URL", "http://localhost:5173")
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
@@ -91,6 +90,226 @@ async def send_email(email: str, link: str):
 
   await fm.send_message(message)
 
+
+def render_auth_page(title: str, body: str) -> HTMLResponse:
+  html = f"""<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      :root {{
+        color-scheme: dark;
+        --bg0: #08131a;
+        --bg1: #0f2430;
+        --card: rgba(7, 18, 24, 0.76);
+        --border: rgba(197, 235, 255, 0.18);
+        --text: #eef8ff;
+        --muted: #9fbbca;
+        --accent: #79d9ff;
+        --accent-strong: #44c7ff;
+        --danger: #ff7b86;
+        --success: #8ef0b7;
+      }}
+
+      * {{
+        box-sizing: border-box;
+      }}
+
+      body {{
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top, rgba(121, 217, 255, 0.18), transparent 34%),
+          linear-gradient(160deg, var(--bg0), var(--bg1));
+      }}
+
+      .card {{
+        width: min(100%, 420px);
+        padding: 32px 28px;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32);
+      }}
+
+      h1 {{
+        margin: 0 0 12px;
+        font-size: 28px;
+      }}
+
+      p {{
+        margin: 0;
+        line-height: 1.6;
+        color: var(--muted);
+      }}
+
+      form {{
+        margin-top: 24px;
+      }}
+
+      label {{
+        display: block;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: var(--muted);
+      }}
+
+      input {{
+        width: 100%;
+        margin-top: 8px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        font-size: 16px;
+      }}
+
+      button {{
+        width: 100%;
+        margin-top: 14px;
+        padding: 14px 16px;
+        border: 0;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #06202d;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+      }}
+
+      button:disabled {{
+        opacity: 0.72;
+        cursor: wait;
+      }}
+
+      .message {{
+        margin-top: 18px;
+        min-height: 24px;
+        font-size: 14px;
+      }}
+
+      .message.error {{
+        color: var(--danger);
+      }}
+
+      .message.success {{
+        color: var(--success);
+      }}
+
+      .actions {{
+        margin-top: 22px;
+      }}
+
+      .actions a {{
+        color: var(--accent);
+        text-decoration: none;
+      }}
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      {body}
+    </main>
+  </body>
+</html>"""
+
+  return HTMLResponse(content=html)
+
+
+def render_verify_result(title: str, message: str, success: bool) -> HTMLResponse:
+  status_class = "success" if success else "error"
+  body = f"""
+      <h1>{title}</h1>
+      <p>{message}</p>
+      <div class="message {status_class}">
+        {"You can return to the app and sign in now." if success else "Please request a new verification email and try again."}
+      </div>
+    """
+  return render_auth_page(title, body)
+
+
+def render_reset_page(token: str) -> HTMLResponse:
+  safe_token = token.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+  body = f"""
+      <h1>Reset password</h1>
+      <p>Enter a new password for your Nautilus account.</p>
+      <form id="reset-form">
+        <label>
+          New password
+          <input id="password" type="password" minlength="1" autocomplete="new-password" required />
+        </label>
+        <button id="submit-button" type="submit">Change password</button>
+      </form>
+      <div id="message" class="message"></div>
+      <div class="actions">
+        <a href="/">Open Nautilus</a>
+      </div>
+      <script>
+        const token = "{safe_token}";
+        const form = document.getElementById("reset-form");
+        const passwordInput = document.getElementById("password");
+        const submitButton = document.getElementById("submit-button");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async (event) => {{
+          event.preventDefault();
+
+          const password = passwordInput.value.trim();
+
+          if (!password) {{
+            message.textContent = "Enter a new password.";
+            message.className = "message error";
+            return;
+          }}
+
+          submitButton.disabled = true;
+          message.textContent = "Updating password...";
+          message.className = "message";
+
+          try {{
+            const response = await fetch(window.location.pathname, {{
+              method: "POST",
+              headers: {{
+                "Content-Type": "application/json"
+              }},
+              body: JSON.stringify({{
+                token,
+                new_password: password
+              }})
+            }});
+
+            const data = await response.json();
+            const error = Array.isArray(data.detail) ? data.detail[0]?.msg : data.detail;
+
+            if (!response.ok || error) {{
+              message.textContent = error || "Could not reset password.";
+              message.className = "message error";
+              return;
+            }}
+
+            message.textContent = data.message || "Password updated.";
+            message.className = "message success";
+            form.style.display = "none";
+          }} catch (_error) {{
+            message.textContent = "Network error. Please try again.";
+            message.className = "message error";
+          }} finally {{
+            submitButton.disabled = false;
+          }}
+        }});
+      </script>
+    """
+  return render_auth_page("Reset password", body)
+
 # -----------------------------
 # router
 # -----------------------------
@@ -137,14 +356,22 @@ def verify_email(token: str, db: Session = Depends(get_db)):
   user = db.query(User).filter(User.verify_token == token).first()
 
   if not user:
-    raise HTTPException(400, "invalid token")
+    return render_verify_result(
+      "Verification failed",
+      "This verification link is invalid or has already been used.",
+      False,
+    )
 
   user.email_verified = True
   user.verify_token = None
 
   db.commit()
 
-  return RedirectResponse(f"{WEB_APP_URL}/login")
+  return render_verify_result(
+    "Email verified",
+    "Your email address has been verified successfully.",
+    True,
+  )
 
 # -----------------------------
 # login
@@ -189,7 +416,7 @@ async def request_reset(data: ResetRequest, db: Session = Depends(get_db)):
 
   db.commit()
 
-  link = f"{WEB_APP_URL}/reset-password?token={token}"
+  link = f"{PUBLIC_API_BASE_URL}/reset-password?token={token}"
 
   await send_email(user.email, link)
 
@@ -198,6 +425,10 @@ async def request_reset(data: ResetRequest, db: Session = Depends(get_db)):
 # -----------------------------
 # reset password
 # -----------------------------
+
+@router.get("/reset-password")
+def reset_password_page(token: str):
+  return render_reset_page(token)
 
 @router.post("/reset-password")
 def reset_password(data: ResetPassword, db: Session = Depends(get_db)):
