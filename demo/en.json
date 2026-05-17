@@ -1,0 +1,248 @@
+{
+  "language": "en",
+  "title": "A sample page, served from central",
+  "description": "Nautilus helps learners move from isolated vocabulary to connected meaning. This page keeps the demo lightweight, but the interactions are real: tap a highlighted word for lemma expansion, or test the writing surface with an English n-gram pack already installed on central.",
+  "sample_input": "language opens a sentence",
+  "result": {
+    "text": "Language opens a sentence. Context turns a word into meaning.\nTap a word to explore related ideas and sample lines.",
+    "blocks": [
+      {
+        "text": "Language opens a sentence. Context turns a word into meaning.",
+        "tokens": [
+          { "surface": "Language", "lemma": "language", "pos": "NOUN", "dep": "nsubj" },
+          { "surface": "opens", "lemma": "open", "pos": "VERB", "dep": "root" },
+          { "surface": "a", "lemma": "a", "pos": "DET", "dep": "det" },
+          { "surface": "sentence", "lemma": "sentence", "pos": "NOUN", "dep": "obj" },
+          { "surface": ".", "lemma": ".", "pos": "PUNCT", "dep": "punct" },
+          { "surface": "Context", "lemma": "context", "pos": "NOUN", "dep": "nsubj" },
+          { "surface": "turns", "lemma": "turn", "pos": "VERB", "dep": "root" },
+          { "surface": "a", "lemma": "a", "pos": "DET", "dep": "det" },
+          { "surface": "word", "lemma": "word", "pos": "NOUN", "dep": "obj" },
+          { "surface": "into", "lemma": "into", "pos": "ADP", "dep": "case" },
+          { "surface": "meaning", "lemma": "meaning", "pos": "NOUN", "dep": "obj" },
+          { "surface": ".", "lemma": ".", "pos": "PUNCT", "dep": "punct" }
+        ]
+      },
+      {
+        "text": "Tap a word to explore related ideas and sample lines.",
+        "tokens": [
+          { "surface": "Tap", "lemma": "tap", "pos": "VERB", "dep": "root" },
+          { "surface": "a", "lemma": "a", "pos": "DET", "dep": "det" },
+          { "surface": "word", "lemma": "word", "pos": "NOUN", "dep": "obj" },
+          { "surface": "to", "lemma": "to", "pos": "PART", "dep": "mark" },
+          { "surface": "explore", "lemma": "explore", "pos": "VERB", "dep": "xcomp" },
+          { "surface": "related", "lemma": "related", "pos": "ADJ", "dep": "amod" },
+          { "surface": "ideas", "lemma": "idea", "pos": "NOUN", "dep": "obj" },
+          { "surface": "and", "lemma": "and", "pos": "CCONJ", "dep": "cc" },
+          { "surface": "sample", "lemma": "sample", "pos": "ADJ", "dep": "amod" },
+          { "surface": "lines", "lemma": "line", "pos": "NOUN", "dep": "conj" },
+          { "surface": ".", "lemma": ".", "pos": "PUNCT", "dep": "punct" }
+        ]
+      }
+    ]
+  },
+  "lemma_info": {
+    "language_NOUN": {
+      "key": "language_NOUN",
+      "global_key": "language/NOUN/en",
+      "is_favorite": false,
+      "related": ["word_NOUN", "meaning_NOUN", "sentence_NOUN", "text_NOUN", "speech_NOUN"],
+      "kwic": [
+        {
+          "line_id": 1,
+          "match_indices": [1],
+          "tokens": [
+            { "lemma": "this", "pos": "DET", "surface": "This", "dep": "det" },
+            { "lemma": "language", "pos": "NOUN", "surface": "language", "dep": "nsubj" },
+            { "lemma": "shape", "pos": "VERB", "surface": "shapes", "dep": "root" },
+            { "lemma": "attention", "pos": "NOUN", "surface": "attention", "dep": "obj" }
+          ]
+        },
+        {
+          "line_id": 2,
+          "match_indices": [2],
+          "tokens": [
+            { "lemma": "a", "pos": "DET", "surface": "A", "dep": "det" },
+            { "lemma": "new", "pos": "ADJ", "surface": "new", "dep": "amod" },
+            { "lemma": "language", "pos": "NOUN", "surface": "language", "dep": "nsubj" },
+            { "lemma": "open", "pos": "VERB", "surface": "opens", "dep": "root" },
+            { "lemma": "door", "pos": "NOUN", "surface": "doors", "dep": "obj" }
+          ]
+        }
+      ]
+    },
+    "sentence_NOUN": {
+      "key": "sentence_NOUN",
+      "global_key": "sentence/NOUN/en",
+      "is_favorite": false,
+      "related": ["phrase_NOUN", "word_NOUN", "meaning_NOUN", "text_NOUN", "line_NOUN"],
+      "kwic": [
+        {
+          "line_id": 3,
+          "match_indices": [3],
+          "tokens": [
+            { "lemma": "the", "pos": "DET", "surface": "The", "dep": "det" },
+            { "lemma": "short", "pos": "ADJ", "surface": "short", "dep": "amod" },
+            { "lemma": "sentence", "pos": "NOUN", "surface": "sentence", "dep": "nsubj" },
+            { "lemma": "land", "pos": "VERB", "surface": "lands", "dep": "root" }
+          ]
+        },
+        {
+          "line_id": 4,
+          "match_indices": [4],
+          "tokens": [
+            { "lemma": "every", "pos": "DET", "surface": "Every", "dep": "det" },
+            { "lemma": "sentence", "pos": "NOUN", "surface": "sentence", "dep": "nsubj" },
+            { "lemma": "carry", "pos": "VERB", "surface": "carries", "dep": "root" },
+            { "lemma": "rhythm", "pos": "NOUN", "surface": "rhythm", "dep": "obj" }
+          ]
+        }
+      ]
+    },
+    "context_NOUN": {
+      "key": "context_NOUN",
+      "global_key": "context/NOUN/en",
+      "is_favorite": false,
+      "related": ["meaning_NOUN", "situation_NOUN", "word_NOUN", "idea_NOUN", "example_NOUN"],
+      "kwic": [
+        {
+          "line_id": 5,
+          "match_indices": [1],
+          "tokens": [
+            { "lemma": "context", "pos": "NOUN", "surface": "Context", "dep": "nsubj" },
+            { "lemma": "change", "pos": "VERB", "surface": "changes", "dep": "root" },
+            { "lemma": "everything", "pos": "PRON", "surface": "everything", "dep": "obj" }
+          ]
+        },
+        {
+          "line_id": 6,
+          "match_indices": [3],
+          "tokens": [
+            { "lemma": "without", "pos": "ADP", "surface": "Without", "dep": "case" },
+            { "lemma": "context", "pos": "NOUN", "surface": "context", "dep": "obl" },
+            { "lemma": "the", "pos": "DET", "surface": "the", "dep": "det" },
+            { "lemma": "word", "pos": "NOUN", "surface": "word", "dep": "nsubj" },
+            { "lemma": "float", "pos": "VERB", "surface": "floats", "dep": "root" }
+          ]
+        }
+      ]
+    },
+    "word_NOUN": {
+      "key": "word_NOUN",
+      "global_key": "word/NOUN/en",
+      "is_favorite": false,
+      "related": ["language_NOUN", "meaning_NOUN", "phrase_NOUN", "text_NOUN", "idea_NOUN"],
+      "kwic": [
+        {
+          "line_id": 7,
+          "match_indices": [2],
+          "tokens": [
+            { "lemma": "each", "pos": "DET", "surface": "Each", "dep": "det" },
+            { "lemma": "word", "pos": "NOUN", "surface": "word", "dep": "nsubj" },
+            { "lemma": "wait", "pos": "VERB", "surface": "waits", "dep": "root" },
+            { "lemma": "for", "pos": "ADP", "surface": "for", "dep": "case" },
+            { "lemma": "company", "pos": "NOUN", "surface": "company", "dep": "obl" }
+          ]
+        },
+        {
+          "line_id": 8,
+          "match_indices": [3],
+          "tokens": [
+            { "lemma": "a", "pos": "DET", "surface": "A", "dep": "det" },
+            { "lemma": "word", "pos": "NOUN", "surface": "word", "dep": "nsubj" },
+            { "lemma": "become", "pos": "VERB", "surface": "becomes", "dep": "root" },
+            { "lemma": "clear", "pos": "ADJ", "surface": "clear", "dep": "xcomp" },
+            { "lemma": "in", "pos": "ADP", "surface": "in", "dep": "case" },
+            { "lemma": "use", "pos": "NOUN", "surface": "use", "dep": "obl" }
+          ]
+        }
+      ]
+    },
+    "meaning_NOUN": {
+      "key": "meaning_NOUN",
+      "global_key": "meaning/NOUN/en",
+      "is_favorite": false,
+      "related": ["context_NOUN", "idea_NOUN", "language_NOUN", "word_NOUN", "sense_NOUN"],
+      "kwic": [
+        {
+          "line_id": 9,
+          "match_indices": [3],
+          "tokens": [
+            { "lemma": "meaning", "pos": "NOUN", "surface": "Meaning", "dep": "nsubj" },
+            { "lemma": "grow", "pos": "VERB", "surface": "grows", "dep": "root" },
+            { "lemma": "through", "pos": "ADP", "surface": "through", "dep": "case" },
+            { "lemma": "use", "pos": "NOUN", "surface": "use", "dep": "obl" }
+          ]
+        },
+        {
+          "line_id": 10,
+          "match_indices": [2],
+          "tokens": [
+            { "lemma": "shared", "pos": "ADJ", "surface": "Shared", "dep": "amod" },
+            { "lemma": "meaning", "pos": "NOUN", "surface": "meaning", "dep": "nsubj" },
+            { "lemma": "pull", "pos": "VERB", "surface": "pulls", "dep": "root" },
+            { "lemma": "reader", "pos": "NOUN", "surface": "readers", "dep": "obj" },
+            { "lemma": "in", "pos": "ADP", "surface": "in", "dep": "compound:prt" }
+          ]
+        }
+      ]
+    },
+    "idea_NOUN": {
+      "key": "idea_NOUN",
+      "global_key": "idea/NOUN/en",
+      "is_favorite": false,
+      "related": ["thought_NOUN", "meaning_NOUN", "context_NOUN", "example_NOUN", "line_NOUN"],
+      "kwic": [
+        {
+          "line_id": 11,
+          "match_indices": [1],
+          "tokens": [
+            { "lemma": "an", "pos": "DET", "surface": "An", "dep": "det" },
+            { "lemma": "idea", "pos": "NOUN", "surface": "idea", "dep": "nsubj" },
+            { "lemma": "arrive", "pos": "VERB", "surface": "arrives", "dep": "root" },
+            { "lemma": "quietly", "pos": "ADV", "surface": "quietly", "dep": "advmod" }
+          ]
+        },
+        {
+          "line_id": 12,
+          "match_indices": [2],
+          "tokens": [
+            { "lemma": "good", "pos": "ADJ", "surface": "Good", "dep": "amod" },
+            { "lemma": "idea", "pos": "NOUN", "surface": "ideas", "dep": "nsubj" },
+            { "lemma": "invite", "pos": "VERB", "surface": "invite", "dep": "root" },
+            { "lemma": "attention", "pos": "NOUN", "surface": "attention", "dep": "obj" }
+          ]
+        }
+      ]
+    },
+    "line_NOUN": {
+      "key": "line_NOUN",
+      "global_key": "line/NOUN/en",
+      "is_favorite": false,
+      "related": ["sentence_NOUN", "example_NOUN", "word_NOUN", "text_NOUN", "voice_NOUN"],
+      "kwic": [
+        {
+          "line_id": 13,
+          "match_indices": [3],
+          "tokens": [
+            { "lemma": "the", "pos": "DET", "surface": "The", "dep": "det" },
+            { "lemma": "line", "pos": "NOUN", "surface": "line", "dep": "nsubj" },
+            { "lemma": "settle", "pos": "VERB", "surface": "settles", "dep": "root" },
+            { "lemma": "down", "pos": "ADV", "surface": "down", "dep": "advmod" }
+          ]
+        },
+        {
+          "line_id": 14,
+          "match_indices": [4],
+          "tokens": [
+            { "lemma": "one", "pos": "DET", "surface": "One", "dep": "nummod" },
+            { "lemma": "line", "pos": "NOUN", "surface": "line", "dep": "nsubj" },
+            { "lemma": "can", "pos": "AUX", "surface": "can", "dep": "aux" },
+            { "lemma": "shift", "pos": "VERB", "surface": "shift", "dep": "root" },
+            { "lemma": "tone", "pos": "NOUN", "surface": "tone", "dep": "obj" }
+          ]
+        }
+      ]
+    }
+  }
+}

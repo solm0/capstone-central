@@ -18,9 +18,11 @@ from routers.mutual_router import router as mutual_router
 from routers.comment_router import router as comment_router
 from routers.internal_router import router as internal_router
 from routers.mobile_router import router as mobile_router
+from routers.demo_router import router as demo_router
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models"
+LANDING_DIR = BASE_DIR / "static" / "landing"
 
 CLASSLA_LANGS = {"sr", "mk"}
 
@@ -93,5 +95,13 @@ app.include_router(mutual_router)
 app.include_router(comment_router)
 app.include_router(internal_router)
 app.include_router(mobile_router)
+app.include_router(demo_router)
 
 Base.metadata.create_all(bind=engine)
+
+if LANDING_DIR.exists():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(LANDING_DIR), html=True),
+        name="landing",
+    )
