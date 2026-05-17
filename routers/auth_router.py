@@ -13,7 +13,18 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import or_
 from datetime import date
 from db import get_db
-from models import User, Page, Notebook, UserLemma, Annotation, Comment, Mutual, Notification
+from models import (
+  User,
+  Page,
+  Notebook,
+  UserLemma,
+  Annotation,
+  Comment,
+  Mutual,
+  Notification,
+  ReadingPreference,
+  DailyReadingRecommendation,
+)
 from typing import Optional
 
 # -----------------------------
@@ -559,6 +570,12 @@ def delete_account(
         Mutual.user2_id == user_id,
         Mutual.requester_id == user_id,
       )
+    ).delete(synchronize_session=False)
+    db.query(DailyReadingRecommendation).filter(
+      DailyReadingRecommendation.user_id == user_id
+    ).delete(synchronize_session=False)
+    db.query(ReadingPreference).filter(
+      ReadingPreference.user_id == user_id
     ).delete(synchronize_session=False)
     db.query(Page).filter(Page.user_id == user_id).delete(synchronize_session=False)
     db.query(Notebook).filter(Notebook.user_id == user_id).delete(synchronize_session=False)

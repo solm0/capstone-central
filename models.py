@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     Text,
     DateTime,
+    Date,
     ForeignKey,
     UniqueConstraint
 )
@@ -111,3 +112,36 @@ class Notification(Base):
     is_read = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReadingPreference(Base):
+    __tablename__ = "reading_preferences"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True)
+    enabled = Column(Boolean, default=True)
+    languages_json = Column(Text, default="[]")
+    categories_json = Column(Text, default="[]")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class DailyReadingRecommendation(Base):
+    __tablename__ = "daily_reading_recommendations"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    recommendation_date = Column(Date, index=True)
+    language = Column(String, nullable=False)
+    category_key = Column(String, nullable=True)
+    gutenberg_id = Column(Integer, nullable=False)
+    title = Column(String, nullable=False)
+    author = Column(String, nullable=False)
+    summary = Column(Text, nullable=False)
+    excerpt = Column(Text, nullable=False)
+    source_url = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "recommendation_date"),
+    )
