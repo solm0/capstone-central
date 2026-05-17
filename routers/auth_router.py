@@ -204,15 +204,6 @@ def render_auth_page(title: str, body: str) -> HTMLResponse:
       .message.success {{
         color: var(--success);
       }}
-
-      .actions {{
-        margin-top: 22px;
-      }}
-
-      .actions a {{
-        color: var(--accent);
-        text-decoration: none;
-      }}
     </style>
   </head>
   <body>
@@ -250,9 +241,6 @@ def render_reset_page(token: str) -> HTMLResponse:
         <button id="submit-button" type="submit">Change password</button>
       </form>
       <div id="message" class="message"></div>
-      <div class="actions">
-        <a href="/">Open Nautilus</a>
-      </div>
       <script>
         const token = "{safe_token}";
         const form = document.getElementById("reset-form");
