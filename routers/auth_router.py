@@ -10,9 +10,10 @@ import os
 from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import or_
 from datetime import date
 from db import get_db
-from models import User
+from models import User, Page, Notebook, UserLemma, Annotation, Comment, Mutual, Notification
 from typing import Optional
 
 # -----------------------------
@@ -501,3 +502,67 @@ def update_name(
     db.commit()
 
     return {"name": current_user.name}
+
+
+@router.delete("/me")
+def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_id = current_user.id
+
+    owned_page_ids = [
+      row[0]
+      for row in db.query(Page.id).filter(Page.user_id == user_id).all()
+    ]
+
+    owned_annotation_query = db.query(Annotation.id).filter(Annotation.user_id == user_id)
+    if owned_page_ids:
+      owned_annotation_query = owned_annotation_query.union(
+        db.query(Annotation.id).filter(Annotation.page_id.in_(owned_page_ids))
+      )
+
+    owned_annotation_ids = [row[0] for row in owned_annotation_query.all()]
+
+    notification_filters = [
+      Notification.user_id == user_id,
+      Notification.actor_id == user_id,
+    ]
+
+    comment_filters = [
+      Comment.user_id == user_id,
+    ]
+
+    annotation_filters = [
+      Annotation.user_id == user_id,
+    ]
+
+    if owned_annotation_ids:
+      notification_filters.extend([
+        Notification.annotation_id.in_(owned_annotation_ids),
+        Notification.comment_id.in_(
+          db.query(Comment.id).filter(Comment.annotation_id.in_(owned_annotation_ids))
+        ),
+      ])
+      comment_filters.append(Comment.annotation_id.in_(owned_annotation_ids))
+
+    if owned_page_ids:
+      annotation_filters.append(Annotation.page_id.in_(owned_page_ids))
+
+    db.query(Notification).filter(or_(*notification_filters)).delete(synchronize_session=False)
+    db.query(Comment).filter(or_(*comment_filters)).delete(synchronize_session=False)
+    db.query(Annotation).filter(or_(*annotation_filters)).delete(synchronize_session=False)
+    db.query(UserLemma).filter(UserLemma.user_id == user_id).delete(synchronize_session=False)
+    db.query(Mutual).filter(
+      or_(
+        Mutual.user1_id == user_id,
+        Mutual.user2_id == user_id,
+        Mutual.requester_id == user_id,
+      )
+    ).delete(synchronize_session=False)
+    db.query(Page).filter(Page.user_id == user_id).delete(synchronize_session=False)
+    db.query(Notebook).filter(Notebook.user_id == user_id).delete(synchronize_session=False)
+    db.delete(current_user)
+    db.commit()
+
+    return {"ok": True}
