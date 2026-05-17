@@ -1,6 +1,7 @@
+import json
 import unicodedata
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -66,11 +67,31 @@ def fetch_favorites(
 
 
 @router.get("/predict")
-def predict(text: str, language: str):
-    tokens = tokenize(text, language)
+def predict(
+    language: str,
+    text: str | None = None,
+    context: str | None = Query(default=None),
+):
+    tokens = None
+
+    if context is not None:
+        try:
+            parsed = json.loads(context)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="invalid context") from exc
+
+        if not isinstance(parsed, list) or not all(isinstance(token, str) for token in parsed):
+            raise HTTPException(status_code=400, detail="invalid context")
+
+        tokens = parsed
+    elif text is not None:
+        tokens = tokenize(text, language)
+    else:
+        raise HTTPException(status_code=422, detail="text or context is required")
 
     return {
         "input": text,
+        "context": tokens,
         "tokens": tokens,
         "predictions": predict_next(tokens, language),
     }
