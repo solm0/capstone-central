@@ -334,7 +334,7 @@ def fetch_gutendex_json(url: str) -> dict[str, Any]:
     )
 
     try:
-        with urlopen(request, timeout=12) as response:
+        with urlopen(request, timeout=6) as response:
             return json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, socket.timeout, json.JSONDecodeError) as error:
         raise RuntimeError("Could not fetch Gutenberg catalog data right now.") from error
@@ -350,7 +350,7 @@ def fetch_remote_text(url: str) -> str | None:
     )
 
     try:
-        with urlopen(request, timeout=12) as response:
+        with urlopen(request, timeout=8) as response:
             charset = response.headers.get_content_charset() or "utf-8"
             return response.read().decode(charset, errors="ignore")
     except (HTTPError, URLError, TimeoutError, socket.timeout, UnicodeDecodeError):
@@ -385,22 +385,24 @@ def fetch_books_for_language(language: str, categories: list[str]) -> list[dict[
     urls.append(build_gutendex_url(language))
 
     for url in urls:
-        next_url: str | None = url
-        pages = 0
+        if len(results) >= 60:
+            break
 
-        while next_url and pages < 2 and len(results) < 120:
-            payload = fetch_gutendex_json(next_url)
-            for book in payload.get("results", []):
-                book_id = book.get("id")
-                if not isinstance(book_id, int) or book_id in seen_ids:
-                    continue
+        try:
+            payload = fetch_gutendex_json(url)
+        except RuntimeError:
+            continue
 
-                seen_ids.add(book_id)
-                results.append(book)
+        for book in payload.get("results", []):
+            book_id = book.get("id")
+            if not isinstance(book_id, int) or book_id in seen_ids:
+                continue
 
-            next_candidate = payload.get("next")
-            next_url = next_candidate if isinstance(next_candidate, str) else None
-            pages += 1
+            seen_ids.add(book_id)
+            results.append(book)
+
+            if len(results) >= 60:
+                break
 
     return results
 
@@ -703,7 +705,7 @@ def generate_recommendation(
             reverse=True,
         )
 
-        for _, book, matched_categories in ranked[:18]:
+        for _, book, matched_categories in ranked[:6]:
             text_url = pick_text_url(book)
             if not text_url:
                 continue
