@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 import unicodedata
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,6 +17,7 @@ from services.nlp_service import align_tokens
 from services.prediction_service import predict_next, search_prefix, tokenize
 
 router = APIRouter(prefix="/api/mobile", tags=["mobile"])
+logger = logging.getLogger(__name__)
 
 
 class Block(BaseModel):
@@ -107,10 +110,30 @@ def search(q: str, language: str):
 
 @router.post("/analyze")
 def analyze(req: AnalyzeRequest):
-    nlp = get_nlp(req.language)
+    started_at = time.perf_counter()
+    logger.info(
+        "[mobile.analyze] start language=%s blocks=%s",
+        req.language,
+        len(req.blocks),
+    )
+
+    try:
+        nlp = get_nlp(req.language)
+        logger.info(
+            "[mobile.analyze] pipeline ready language=%s elapsed=%.2fs",
+            req.language,
+            time.perf_counter() - started_at,
+        )
+    except Exception:
+        logger.exception(
+            "[mobile.analyze] pipeline init failed language=%s",
+            req.language,
+        )
+        raise
+
     out_blocks = []
 
-    for block in req.blocks:
+    for index, block in enumerate(req.blocks):
         text = block.text.strip()
 
         if not text:
@@ -123,7 +146,27 @@ def analyze(req: AnalyzeRequest):
         if req.language == "sr":
             text = normalize_sr(text)
 
-        doc = nlp(text)
+        block_started_at = time.perf_counter()
+
+        try:
+            logger.info(
+                "[mobile.analyze] block=%s chars=%s running_nlp",
+                index,
+                len(text),
+            )
+            doc = nlp(text)
+            logger.info(
+                "[mobile.analyze] block=%s nlp_done elapsed=%.2fs",
+                index,
+                time.perf_counter() - block_started_at,
+            )
+        except Exception:
+            logger.exception(
+                "[mobile.analyze] block=%s nlp failed chars=%s",
+                index,
+                len(text),
+            )
+            raise
 
         tokens_all = []
         for sent in doc.sentences:
@@ -134,6 +177,12 @@ def analyze(req: AnalyzeRequest):
             "tokens": tokens_all or [],
         })
 
+    logger.info(
+        "[mobile.analyze] done language=%s blocks=%s elapsed=%.2fs",
+        req.language,
+        len(out_blocks),
+        time.perf_counter() - started_at,
+    )
     return {"blocks": out_blocks}
 
 
