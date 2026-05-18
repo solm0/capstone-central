@@ -3,6 +3,7 @@ from pathlib import Path
 
 import stanza
 import classla
+from sqlalchemy import text
 
 from db import engine, Base
 from packs import PACKS
@@ -100,6 +101,25 @@ app.include_router(demo_router)
 app.include_router(reading_router)
 
 Base.metadata.create_all(bind=engine)
+
+def ensure_page_schema():
+    with engine.begin() as conn:
+        columns = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(pages)").fetchall()
+        }
+
+        if "source" not in columns:
+            conn.execute(
+                text("ALTER TABLE pages ADD COLUMN source VARCHAR NOT NULL DEFAULT 'user'")
+            )
+
+        if "metadata_json" not in columns:
+            conn.execute(
+                text("ALTER TABLE pages ADD COLUMN metadata_json TEXT NOT NULL DEFAULT '[]'")
+            )
+
+ensure_page_schema()
 
 if LANDING_DIR.exists():
     app.mount(

@@ -4,7 +4,6 @@ from sqlalchemy import func
 from datetime import datetime
 import json
 from typing import Optional
-from datetime import datetime
 
 from db import get_db
 from models import Page, Notebook, User, Annotation, Comment
@@ -12,6 +11,87 @@ from .auth_router import get_current_user
 from .comment_router import can_access_annotation
 
 router = APIRouter(prefix="/api", tags=["pages"])
+
+MAX_PAGE_METADATA_ITEMS = 5
+
+
+def parse_page_metadata(page: Page) -> list[str]:
+    try:
+        raw = json.loads(page.metadata_json or "[]")
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(raw, list):
+        return []
+
+    result: list[str] = []
+
+    for item in raw[:MAX_PAGE_METADATA_ITEMS]:
+        if isinstance(item, str):
+            value = item.strip()
+            if value:
+                result.append(value)
+
+    return result
+
+
+def normalize_page_metadata(value) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise HTTPException(status_code=400, detail="metadata must be an array")
+    if len(value) > MAX_PAGE_METADATA_ITEMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"metadata supports up to {MAX_PAGE_METADATA_ITEMS} items",
+        )
+
+    result: list[str] = []
+
+    for item in value:
+        if not isinstance(item, str):
+            raise HTTPException(status_code=400, detail="metadata values must be strings")
+        trimmed = item.strip()
+        if not trimmed:
+            raise HTTPException(status_code=400, detail="metadata values must not be empty")
+        result.append(trimmed)
+
+    return result
+
+
+def normalize_page_source(value) -> str:
+    source = (value or "user")
+    if not isinstance(source, str):
+        raise HTTPException(status_code=400, detail="source must be a string")
+
+    source = source.strip().lower()
+    if not source:
+        return "user"
+
+    return source
+
+
+def serialize_page_summary(page: Page):
+    return {
+        "id": page.id,
+        "name": page.name,
+        "created_at": page.created_at,
+        "notebook_id": page.notebook_id,
+        "language": page.language,
+        "source": page.source or "user",
+        "metadata": parse_page_metadata(page),
+    }
+
+
+def get_owned_page_or_404(page_id: int, db: Session, current_user: User) -> Page:
+    page = db.query(Page).filter(Page.id == page_id).first()
+
+    if not page:
+        raise HTTPException(status_code=404, detail="page not found")
+    if page.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="forbidden")
+
+    return page
 
 # ===== Page 생성 =====
 @router.post("/pages")
@@ -29,11 +109,15 @@ def save_page(
 
     name = payload.get("name") or f"My page {int(datetime.utcnow().timestamp())}"
     notebook_id = payload.get("notebook_id")
+    source = normalize_page_source(payload.get("source"))
+    metadata = normalize_page_metadata(payload.get("metadata"))
 
     page = Page(
         user_id=current_user.id,
         name=name,
         result_json=json.dumps(payload["result"]),
+        source=source,
+        metadata_json=json.dumps(metadata),
         notebook_id=notebook_id,
         language=language,
         created_at=datetime.utcnow()
@@ -59,16 +143,7 @@ def get_my_pages(
         .all()
     )
 
-    return [
-        {
-            "id": p.id,
-            "name": p.name,
-            "created_at": p.created_at,
-            "notebook_id": p.notebook_id,
-            "language": p.language,
-        }
-        for p in pages
-    ]
+    return [serialize_page_summary(p) for p in pages]
 
 # ===== Page 삭제 =====
 @router.delete("/pages/{page_id}")
@@ -77,13 +152,7 @@ def delete_page(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    page = db.query(Page).filter(Page.id == page_id).first()
-
-    if not page:
-        raise HTTPException(status_code=404, detail="page not found")
-
-    if page.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="forbidden")
+    page = get_owned_page_or_404(page_id, db, current_user)
 
     db.delete(page)
     db.commit()
@@ -98,12 +167,7 @@ def update_page_name(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    page = db.query(Page).filter(Page.id == page_id).first()
-
-    if not page:
-        raise HTTPException(404, "page not found")
-    if page.user_id != current_user.id:
-        raise HTTPException(403, "forbidden")
+    page = get_owned_page_or_404(page_id, db, current_user)
 
     name = payload.get("name")
     if not name:
@@ -113,6 +177,73 @@ def update_page_name(
     db.commit()
 
     return {"ok": True}
+
+
+@router.post("/pages/{page_id}/metadata")
+def add_page_metadata(
+    page_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    page = get_owned_page_or_404(page_id, db, current_user)
+    metadata = parse_page_metadata(page)
+
+    if len(metadata) >= MAX_PAGE_METADATA_ITEMS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"metadata supports up to {MAX_PAGE_METADATA_ITEMS} items",
+        )
+
+    value = payload.get("value")
+    normalized_value = normalize_page_metadata([value])[0]
+    metadata.append(normalized_value)
+    page.metadata_json = json.dumps(metadata)
+    db.commit()
+
+    return {"metadata": metadata}
+
+
+@router.patch("/pages/{page_id}/metadata/{metadata_index}")
+def update_page_metadata(
+    page_id: int,
+    metadata_index: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    page = get_owned_page_or_404(page_id, db, current_user)
+    metadata = parse_page_metadata(page)
+
+    if metadata_index < 0 or metadata_index >= len(metadata):
+        raise HTTPException(status_code=404, detail="metadata not found")
+
+    value = payload.get("value")
+    metadata[metadata_index] = normalize_page_metadata([value])[0]
+    page.metadata_json = json.dumps(metadata)
+    db.commit()
+
+    return {"metadata": metadata}
+
+
+@router.delete("/pages/{page_id}/metadata/{metadata_index}")
+def delete_page_metadata(
+    page_id: int,
+    metadata_index: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    page = get_owned_page_or_404(page_id, db, current_user)
+    metadata = parse_page_metadata(page)
+
+    if metadata_index < 0 or metadata_index >= len(metadata):
+        raise HTTPException(status_code=404, detail="metadata not found")
+
+    metadata.pop(metadata_index)
+    page.metadata_json = json.dumps(metadata)
+    db.commit()
+
+    return {"metadata": metadata}
 
 
 # ===== page 이동 =====
@@ -160,20 +291,17 @@ def get_page(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    page = db.query(Page).filter(Page.id == page_id).first()
-
-    if not page:
-        raise HTTPException(status_code=404, detail="page not found")
-
-    if page.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="forbidden")
+    page = get_owned_page_or_404(page_id, db, current_user)
 
     return {
         "id": page.id,
+        "name": page.name,
         "result": json.loads(page.result_json),
         "created_at": page.created_at,
         "notebook_id": page.notebook_id,
         "language": page.language,
+        "source": page.source or "user",
+        "metadata": parse_page_metadata(page),
     }
 
 
@@ -215,11 +343,7 @@ def get_notebooks(
     )
 
     return [
-        {
-            "id": n.id,
-            "name": n.name,
-            "created_at": n.created_at
-        }
+        {"id": n.id, "name": n.name, "created_at": n.created_at}
         for n in notebooks
     ]
 
@@ -304,6 +428,8 @@ def get_pages_in_notebook(
                 "name": p.name,
                 "created_at": p.created_at,
                 "language": p.language,
+                "source": p.source or "user",
+                "metadata": parse_page_metadata(p),
             }
             for p in pages
         ]

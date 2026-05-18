@@ -8,7 +8,7 @@ from sqlalchemy import (
     DateTime,
     Date,
     ForeignKey,
-    UniqueConstraint
+    UniqueConstraint,
 )
 from datetime import datetime
 
@@ -29,6 +29,8 @@ class Page(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     name = Column(String, default="")
     result_json = Column(Text)
+    source = Column(String, nullable=False, default="user")
+    metadata_json = Column(Text, nullable=False, default="[]")
     created_at = Column(DateTime)
     notebook_id = Column(Integer, ForeignKey("notebooks.id"), nullable=True)
     language = Column(String, nullable=False)
