@@ -118,6 +118,7 @@ def analyze(req: AnalyzeRequest):
     )
 
     try:
+        print("[mobile.analyze] entered", flush=True)
         nlp = get_nlp(req.language)
         logger.info(
             "[mobile.analyze] pipeline ready language=%s elapsed=%.2fs",
@@ -154,12 +155,14 @@ def analyze(req: AnalyzeRequest):
                 index,
                 len(text),
             )
+            print("[mobile.analyze] pipeline ready", flush=True)
             doc = nlp(text)
             logger.info(
                 "[mobile.analyze] block=%s nlp_done elapsed=%.2fs",
                 index,
                 time.perf_counter() - block_started_at,
             )
+            print("[mobile.analyze] nlp(text) done", flush=True)
         except Exception:
             logger.exception(
                 "[mobile.analyze] block=%s nlp failed chars=%s",
