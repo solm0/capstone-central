@@ -12,6 +12,7 @@ from language_config import get_nlp
 from language_config.sr import cyr_to_lat
 from models import User, UserLemma
 from routers.auth_router import get_current_user_optional
+from services.ipa_service import attach_token_ipa, describe_token_articulation
 from services import lemma_service
 from services.nlp_service import align_tokens
 from services.prediction_service import predict_next, search_prefix, tokenize
@@ -37,6 +38,16 @@ class LookupRequest(BaseModel):
 
 class BatchLookupRequest(BaseModel):
     items: list[dict]
+    language: str
+
+
+class IpaRequest(BaseModel):
+    blocks: list[dict]
+    language: str
+
+
+class ArticulationRequest(BaseModel):
+    tokens: list[dict]
     language: str
 
 
@@ -270,6 +281,35 @@ def lookup_batch(
         }
 
     return result
+
+
+@router.post("/ipa")
+def enrich_ipa(req: IpaRequest):
+    return {
+        "blocks": attach_token_ipa(req.blocks, req.language),
+    }
+
+
+@router.post("/articulation")
+def articulation(req: ArticulationRequest):
+    items: list[dict] = []
+
+    for token_index, token in enumerate(req.tokens):
+        token_surface = token.get("surface", "")
+        token_ipa = token.get("ipa")
+
+        for segment_index, detail in enumerate(
+            describe_token_articulation(token_surface, token_ipa)
+        ):
+            items.append({
+                **detail,
+                "token_index": token_index,
+                "segment_index": segment_index,
+            })
+
+    return {
+        "items": items,
+    }
 
 
 @router.post("/ocr")
